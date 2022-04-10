@@ -1,0 +1,164 @@
+<!-- pages/detail/index.wxml -->
+<view id="body">
+  <!-- 全局提醒 -->
+  <i-message id="message" />
+  <!-- 加载中 -->
+  <i-spin fix wx:if="{{loading}}"></i-spin>
+  <view style='background:#eee'>
+    <view style='background:#fff'>
+      <view class='feed-item'>
+        <view class='title'>{{detail.title}}</view>
+        <view class='listPic'>
+          <image mode='widthFix' src="{{detail.listPic}}"></image>
+        </view>
+        <view class='tag-body'>
+          <view class="postDate">
+            <i-icon type="addressbook" color='#738a94' size='16' />
+            <text class='author'>{{detail.author}}</text>
+          </view>
+          <view class="postDate">
+            <i-icon type="browse" color='#738a94' size='18' />
+            <text class='author'>{{detail.read_counts}}</text>
+          </view>
+          <view class="postDate">
+            <i-icon type="time" color='#738a94' size='16' />
+            <text class='author'>{{detail.createdAt}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="wxParse-blockquote">
+        <view class="wxParse-p">
+          <view class="WxEmojiView wxParse-inline">{{detail.excerpt}}</view>
+        </view>
+      </view>
+      <!-- 内容 -->
+      <view class='content'>
+        <view>
+          <!-- highlightStyle pre代码高亮样式，可用值default,darcula,dracula,tomorrow -->
+          <htmltowxml text="{{detail.mdcontent}}" type="markdown" highlightStyle="darcula" linenums="{{true}}" showLoading="{{false}}" bindWxmlTagATap="wxmlTagATap" />
+        </view>
+      </view>
+    </view>
+    <!-- 评论区 -->
+    <view>
+      <view wx:if="{{comment_count == 0}}" class="resp-head">暂无评论</view>
+      <view wx:else style='padding-bottom:60px;'>
+        <view class="resp-head1">全部评论（{{ comment_count }}）</view>
+        <view class="comment" wx:for="{{comments}}" wx:key="comment">
+          <!-- 评论 -->
+          <view class="comment-info">
+            <view class="comment-author">
+              <view bindlongpress="replyComment" data-id="{{item.id}}" data-parentcommentid="{{item.id}}" data-nickname="{{item.user_name}}" data-formid="2">
+                <image class="comment-author-icon" src="{{item.avatarurl}}"></image>
+              </view>
+              <view class="comment-author-info">
+                <view>{{ item.user_name }}</view>
+                <view style="margin-top: 5px;">{{ item.create_time }}</view>
+              </view>
+            </view>
+            <view class="comment-author-position">
+              <view>{{ index + 1 }}楼</view>
+            </view>
+          </view>
+          <view>
+            <view class="h2w h2w-light">
+              <view class="h2w__main">
+                <view class="h2w__p">{{ item.content }}</view>
+              </view>
+            </view>
+          </view>
+          <!-- 回复 -->
+          <view style=" background-color: #F5F5F5" hover-class="none" hover-stop-propagation="false">
+            <view class="replys_box" wx:for="{{replys}}" wx:for-item="replys" wx:for-index="replys_index" wx:key="replys_index" wx:if="{{replys.parent_comment_id===item.id}}">
+              <view class="comment-info">
+                <view class="comment-author">
+                  <view bindlongpress="replyComment" data-id="{{replys.id}}" data-parentcommentid="{{item.id}}" data-nickname="{{replys.user_name}}" data-formid="3">
+                    <image class="comment-author-icon" src="{{replys.avatarurl}}"></image>
+                  </view>
+                  <view class="comment-author-info">
+                    <view>{{ replys.user_name }}</view>
+                    <view style="margin-top: 5px;">{{ replys.create_time }}</view>
+                  </view>
+                </view>
+                <view class="comment-author-position"></view>
+              </view>
+              <view class="h2w h2w-light">
+                <view class="h2w__main">
+                  <view class="h2w__p">
+                    <view wx:if="{{replys.reply_comment_name}}" style=" color:blue;display: inline-block;">
+                      <text style="color: #333;">回复</text>
+                      @{{replys.reply_comment_name}}
+                      <text style="color: #333;">:</text>
+                    </view>
+                    {{ replys.content }}
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <!-- 底部框 -->
+    <view class='comment-fixed'>
+      <form bindsubmit="formSubmit" report-submit='true'>
+        <view class="comment-respond">
+          <view class="comment-box">
+            <view wx:if="{{userInfo.nickName}}" style='display:flex;width:100%;'>
+              <input bindinput="hendelGetValue" class="comment-input" confirmType="send" cursorSpacing="10" focus="{{focus}}" maxlength="100" name="inputComment" placeholder="说点什么吧..." type="text" value="{{commentContent}}" />
+              <!-- <view class="close_user">{{commentContent}}</view> -->
+              <button class="comment-button {{touch_active?'touch-active':''}} " form-type="submit">
+                发送
+              </button>
+            </view>
+            <view wx:else class="need-login" bindtap='goMy'>点击此处授权，即可评论文章😆</view>
+            <view catchtap="showHideMenu" class="zan-icon zan-icon-add-o zan-font-20 icon-add">
+              <image src='../../images/open.png' class='open'></image>
+            </view>
+          </view>
+          <view class="menu-box {{isShow?'emoji-move-in':'emoji-move-out'}} {{isLoad?'no-emoji-move':''}}">
+            <view class="iconList">
+              <view class="iconLine">
+                <view class="icon-type">
+                  <view>
+                    <image class="img-menu" src="../../images/share.png"></image>
+                  </view>
+                  <view>
+                    <text>转发</text>
+                  </view>
+                  <button class="share-button share-button touch-active" openType="share"></button>
+                </view>
+                <view catchtap="createPic" class="icon-type" wx:if="{{status}}">
+                  <view>
+                    <image class="img-menu" src="../../images/poster.png"></image>
+                  </view>
+                  <view>
+                    <text>海报</text>
+                  </view>
+                </view>
+                <view catchtap="collection" data-action="{{isCollect?'noCollect':'collect'}}" class="icon-type">
+                  <view>
+                    <image class="img-menu" src="../../images/{{isCollect?'collected.png':'collect.png'}}"></image>
+                  </view>
+                  <view>
+                    <text wx:if="{{isCollect}}">已收藏</text>
+                    <text wx:else>收藏</text>
+                  </view>
+                </view>
+                <view catchtap="like" data-action="{{isLike?'noLike':'like'}}" class="icon-type">
+                  <view>
+                    <image class="img-menu" src="../../images/{{isLike?'liked.png':'like.png'}}"></image>
+                  </view>
+                  <view>
+                    <text wx:if="{{isLike}}">已点赞</text>
+                    <text wx:else>点赞</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </form>
+    </view>
+  </view>
+</view>
